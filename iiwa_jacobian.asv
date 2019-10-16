@@ -1,3 +1,0 @@
-function J = iiwa_jacobian(R, q)
-if(q(3))
-J = R.jacob0(q)
