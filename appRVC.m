@@ -65,7 +65,7 @@ R = LBRiiwa();
 q = [0 0 0 0 0 0 0];
 updateDataQ(handles);
 updateJacobian(handles);
-updatePlot();
+updatePlot(handles);
 
 
 % --- Outputs from this function are returned to the command line.
@@ -122,7 +122,7 @@ global q;
 aux = str2double(get(hObject, 'String'));
 set(handles.sliderQ1, 'Value', aux);
 q(1) = deg2rad(aux);
-updatePlot();
+updatePlot(handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -150,7 +150,7 @@ global q;
 aux = str2double(get(hObject, 'String'));
 set(handles.sliderQ2, 'Value', aux);
 q(2) = deg2rad(aux);
-updatePlot();
+updatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
 function q2_CreateFcn(hObject, eventdata, handles)
@@ -176,7 +176,7 @@ global q;
 aux = str2double(get(hObject, 'String'));
 set(handles.sliderQ3, 'Value', aux);
 q(3) = deg2rad(aux);
-updatePlot();
+updatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
 function q3_CreateFcn(hObject, eventdata, handles)
@@ -202,7 +202,7 @@ global q;
 aux = str2double(get(hObject, 'String'));
 set(handles.sliderQ4, 'Value', aux);
 q(4) = deg2rad(aux);
-updatePlot();
+updatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
 function q4_CreateFcn(hObject, eventdata, handles)
@@ -229,7 +229,7 @@ global q;
 aux = str2double(get(hObject, 'String'));
 set(handles.sliderQ5, 'Value', aux);
 q(5) = deg2rad(aux);
-updatePlot();
+updatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
 function q5_CreateFcn(hObject, eventdata, handles)
@@ -255,7 +255,7 @@ global q;
 aux = str2double(get(hObject, 'String'));
 set(handles.sliderQ6, 'Value', aux);
 q(6) = deg2rad(aux);
-updatePlot();
+updatePlot(handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -282,7 +282,7 @@ global q;
 aux = str2double(get(hObject, 'String'));
 set(handles.sliderQ7, 'Value', aux);
 q(7) = deg2rad(aux);
-updatePlot();
+updatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
 function q7_CreateFcn(hObject, eventdata, handles)
@@ -310,7 +310,7 @@ aux = get(hObject, 'Value');
 set(handles.q1, 'String', num2str(aux));
 q(1) = deg2rad(aux);
 updateJacobian(handles);
-updatePlot();
+updatePlot(handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -342,7 +342,7 @@ aux = get(hObject, 'Value');
 set(handles.q2, 'String', num2str(aux));
 q(2) = deg2rad(aux);
 updateJacobian(handles);
-updatePlot();
+updatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
 function sliderQ2_CreateFcn(hObject, eventdata, handles)
@@ -373,7 +373,7 @@ aux = get(hObject, 'Value');
 set(handles.q3, 'String', num2str(aux));
 q(3) = deg2rad(aux);
 updateJacobian(handles);
-updatePlot();
+updatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
 function sliderQ3_CreateFcn(hObject, eventdata, handles)
@@ -404,7 +404,7 @@ aux = get(hObject, 'Value');
 set(handles.q4, 'String', num2str(aux));
 q(4) = deg2rad(aux);
 updateJacobian(handles);
-updatePlot();
+updatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
 function sliderQ4_CreateFcn(hObject, eventdata, handles)
@@ -435,7 +435,7 @@ aux = get(hObject, 'Value');
 set(handles.q5, 'String', num2str(aux));
 q(5) = deg2rad(aux);
 updateJacobian(handles);
-updatePlot();
+updatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
 function sliderQ5_CreateFcn(hObject, eventdata, handles)
@@ -466,7 +466,7 @@ aux = get(hObject, 'Value');
 set(handles.q6, 'String', num2str(aux));
 q(6) = deg2rad(aux);
 updateJacobian(handles);
-updatePlot();
+updatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
 function sliderQ6_CreateFcn(hObject, eventdata, handles)
@@ -497,7 +497,7 @@ aux = get(hObject, 'Value');
 set(handles.q7, 'String', num2str(aux));
 q(7) = deg2rad(aux);
 updateJacobian(handles);
-updatePlot();
+updatePlot(handles);
 
 % --- Executes during object creation, after setting all properties.
 function sliderQ7_CreateFcn(hObject, eventdata, handles)
@@ -668,7 +668,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-
 function editPitch_Callback(hObject, eventdata, handles)
 % hObject    handle to editPitch (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -762,24 +761,24 @@ end
 set(handles.editRankJ, 'String', num2str(rank(J)));
 set(handles.textJsinguValue, 'String', m_jsingu(J));
 
-function updatePlot()
-global R q J flag_ci flag_ellipseV flag_ellipseW E;
+function updatePlot(handles)
+global R q J E;
 R.plot(q);
 C = R.fkine(q).t';
-if (flag_ci == 2) && (flag_ellipseV == 1)
-    if isvalid(E)
+if (get(handles.popupmenuCI, 'Value') == 2) && (get(handles.checkEllipseV, 'Value') == 1)
+    if isgraphics(E)
         plot_ellipse(ellipsoid(J, 'tras'), C, 'alter', E);
     else
         E = plot_ellipse(ellipsoid(J, 'tras'), C, 'alpha', 0);
     end
-elseif (flag_ci == 2) && (flag_ellipseW == 1)
-    if isvalid(E)
+elseif (get(handles.popupmenuCI, 'Value') == 2) && (get(handles.checkEllipseW, 'Value') == 1)
+    if isgraphics(E)
         plot_ellipse(ellipsoid(J, 'rot'), C, 'alter', E, 'r');
     else
         E = plot_ellipse(ellipsoid(J, 'rot'), C, 'alpha', 0);
     end
 else
-    delete(E);
+    %delete(E);
 end
 
 
@@ -870,7 +869,7 @@ flag_ellipseV = get(hObject, 'Value');
 if flag_ellipseV
     flag_ellipseW = 0;
     set(handles.checkEllipseW, 'Value', 0);
-    updatePlot();
+    updatePlot(handles);
 end
 
 %%% ELIPSOIDE ASOCIADO A VELOCIDAD ROTACIONAL
@@ -886,7 +885,7 @@ flag_ellipseW = get(hObject, 'Value');
 if flag_ellipseW
     flag_ellipseV = 0;
     set(handles.checkEllipseV, 'Value', 0);
-    updatePlot();
+    updatePlot(handles);
 end
 %==========================================================================
 
@@ -945,7 +944,7 @@ function buttonReset_Callback(hObject, eventdata, handles)
 global q;
 q = [0 0 0 0 0 0 0];
 updateDataQ(handles);
-updatePlot();
+updatePlot(handles);
 %==========================================================================
 
 function editRankJ_Callback(hObject, eventdata, handles)
