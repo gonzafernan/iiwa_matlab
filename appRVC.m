@@ -22,7 +22,7 @@ function varargout = appRVC(varargin)
 
 % Edit the above text to modify the response to help appRVC
 
-% Last Modified by GUIDE v2.5 15-Oct-2019 21:32:59
+% Last Modified by GUIDE v2.5 21-Oct-2019 14:22:02
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -109,7 +109,6 @@ T = R.fkine(q);
 updateDataT(handles);
 updateJacobian(handles);
 %==========================================================================
-
 
 function q1_Callback(hObject, eventdata, handles)
 % hObject    handle to q1 (see GCBO)
@@ -523,7 +522,7 @@ function buttonWorkspace_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global R q;
 load('workspace', 'wo');
-R.plot(wo, 'trail', 'r-');
+R.plot(wo, 'trail', {'r', 'LineWidth', 2});
 q = wo(length(wo(:, 1)), :);
 updateDataQ(handles);
 %==========================================================================
@@ -712,85 +711,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-function updateDataQ(handles)
-
-global q;
-
-set(handles.q1, 'String', q(1));
-set(handles.q2, 'String', q(2));
-set(handles.q3, 'String', q(3));
-set(handles.q4, 'String', q(4));
-set(handles.q5, 'String', q(5));
-set(handles.q6, 'String', q(6));
-set(handles.q7, 'String', q(7));
-
-set(handles.sliderQ1, 'Value', q(1));
-set(handles.sliderQ2, 'Value', q(2));
-set(handles.sliderQ3, 'Value', q(3));
-set(handles.sliderQ4, 'Value', q(4));
-set(handles.sliderQ5, 'Value', q(5));
-set(handles.sliderQ6, 'Value', q(6));
-set(handles.sliderQ7, 'Value', q(7));
-
-
-function updateDataT(handles)
-
-global T;
-
-set(handles.tableT, 'data', T.T);
-set(handles.editX, 'String', num2str(T.t(1)));
-set(handles.editY, 'String', num2str(T.t(2)));
-set(handles.editZ, 'String', num2str(T.t(3)));
-
-aux = T.tr2rpy;
-set(handles.editRoll, 'String', num2str(rad2deg(aux(1))));
-set(handles.editPitch, 'String', num2str(rad2deg(aux(2))));
-set(handles.editYaw, 'String', num2str(rad2deg(aux(3))));
-
-function updateJacobian(handles)
-global R q J;
-switch get(handles.popupmenuCI, 'Value')
-    case 1
-        J = iiwa_jacobian(R, q, 'normal');
-    case 2
-        J = iiwa_jacobian(R, q, 'simplify');
-        set(handles.editDetJ, 'String', num2str(det(J)));
-        set(handles.editManip, 'String', num2str(R.maniplty(q, 'yoshikawa')));
-end
-set(handles.editRankJ, 'String', num2str(rank(J)));
-set(handles.textJsinguValue, 'String', m_jsingu(J));
-
-function updatePlot(handles)
-global R q J E;
-R.plot(q);
-C = R.fkine(q).t';
-if (get(handles.popupmenuCI, 'Value') == 2) && (get(handles.checkEllipseV, 'Value') == 1)
-    if isgraphics(E)
-        plot_ellipse(ellipsoid(J, 'tras'), C, 'alter', E);
-    else
-        E = plot_ellipse(ellipsoid(J, 'tras'), C, 'alpha', 0);
-    end
-elseif (get(handles.popupmenuCI, 'Value') == 2) && (get(handles.checkEllipseW, 'Value') == 1)
-    if isgraphics(E)
-        plot_ellipse(ellipsoid(J, 'rot'), C, 'alter', E, 'r');
-    else
-        E = plot_ellipse(ellipsoid(J, 'rot'), C, 'alpha', 0);
-    end
-else
-    %delete(E);
-end
-
-
-function E = ellipsoid(J, tag)
-    switch tag
-        case 'tras'
-            E = J(1:3, :);
-        case 'rot'
-            E = J(4:6, :);
-    end
-    E = E*E';
-
 %==========================================================================
 %% CÁLCULO DE LA CINEMÁTICA INVERSA
 % --- Executes on button press in buttonCI.
@@ -798,20 +718,22 @@ function buttonCI_Callback(hObject, eventdata, handles)
 % hObject    handle to buttonCI (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global R q T flag_ci;
-if (flag_ci == 1)
+global R q T stackSol;
+if (get(handles.popupmenuCI, 'Value') == 1)
     q = R.ikine(T);
     R.plot(q);
-elseif (flag_ci == 2)
+elseif (get(handles.popupmenuCI, 'Value') == 2)
     aux = T.tr2rpy;
-    q_lst = iiwa_inverse(R, T.t(1), T.t(2), T.t(3), aux(1), aux(2), aux(3));
-    disp(q_lst);
-    R.plot(q_lst);
-%     for i=1:length(q_lst(:, 1))
-%         q = q_lst(i, :);
-%         R.plot(q);
-%         pause();
-%     end
+    disp([T.t(1) T.t(2) T.t(3) aux(1) aux(2) aux(3)])
+    %q_lst = iiwa_inverse(q(3), [T.t(1) T.t(2) T.t(3)], [aux(1) aux(2) aux(3)], R);
+    stackSol = iiwa_inverse(q(3), T.T, R);
+    q = stackSol(:, 1)';
+    R.plot(q);
+%     set(handles.listSolutionCI, 'String', ...
+%         {"1", "2", "3", "4", "5", "6", "7", "8"});
+    set(handles.popupSol, 'String', ...
+            {"1", "2", "3", "4", "5", "6", "7", "8"});
+    
 end
 updateDataQ(handles);
 %==========================================================================
@@ -891,18 +813,18 @@ end
 
 
 
-function editDetJ_Callback(hObject, eventdata, handles)
-% hObject    handle to editDetJ (see GCBO)
+function editCond_Callback(hObject, eventdata, handles)
+% hObject    handle to editCond (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of editDetJ as text
-%        str2double(get(hObject,'String')) returns contents of editDetJ as a double
+% Hints: get(hObject,'String') returns contents of editCond as text
+%        str2double(get(hObject,'String')) returns contents of editCond as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function editDetJ_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to editDetJ (see GCBO)
+function editCond_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editCond (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -1012,3 +934,116 @@ function textJsinguValue_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in pushPlusX.
+function pushPlusX_Callback(hObject, eventdata, handles)
+% hObject    handle to pushPlusX (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in pushMinusX.
+function pushMinusX_Callback(hObject, eventdata, handles)
+% hObject    handle to pushMinusX (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in pushPlusY.
+function pushPlusY_Callback(hObject, eventdata, handles)
+% hObject    handle to pushPlusY (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in pushMinusY.
+function pushMinusY_Callback(hObject, eventdata, handles)
+% hObject    handle to pushMinusY (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in pushMinusZ.
+function pushMinusZ_Callback(hObject, eventdata, handles)
+% hObject    handle to pushMinusZ (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in pushPlusZ.
+function pushPlusZ_Callback(hObject, eventdata, handles)
+% hObject    handle to pushPlusZ (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in pushbutton18.
+function pushbutton18_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton18 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in pushbutton19.
+function pushbutton19_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton19 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in pushbutton17.
+function pushbutton17_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton17 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in pushbutton16.
+function pushbutton16_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton16 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in pushbutton21.
+function pushbutton21_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton21 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in pushbutton20.
+function pushbutton20_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton20 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%==========================================================================
+%% LISTA DE SOLUCIONES DE CINEMÁTICA INVERSA
+% --- Executes on selection change in popupSol.
+function popupSol_Callback(hObject, eventdata, handles)
+% hObject    handle to popupSol (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupSol contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupSol
+global R q stackSol;
+index = get(hObject, 'Value');
+q = stackSol(:, index)';
+R.plot(q);
+updateDataQ(handles);
+
+% --- Executes during object creation, after setting all properties.
+function popupSol_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupSol (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+%==========================================================================
